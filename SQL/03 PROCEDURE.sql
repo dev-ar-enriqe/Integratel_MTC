@@ -1,3 +1,4 @@
+
 REPLACE PROCEDURE PE_DESA_REG_STAGE.SP_MTC_IDENTIFICA_LINEAS()
 
 BEGIN
@@ -33,7 +34,8 @@ DECLARE vFecFin VARCHAR(8);
 Declare vFECHAINI VARCHAR(8);
 Declare vFECHAFIN VARCHAR(8);*/
 /* CONTROL DE TIEMPO DEL SP */
- DECLARE EXIT HANDLER 
+
+DECLARE EXIT HANDLER 
 FOR SqlException 
 BEGIN
     SET vSQLCode = SqlCode; 
@@ -45,7 +47,7 @@ END;
 --SET vFECHAFIN =  pFecFin; 
  
 SET vSTORED = 'MTCIDENLINEA';
-
+---SELECT * FROM  PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS 	WHERE  SP= 'MTCIDENLINEA'
 --------------------------------------------------------------------------------------------------------------------------------------------
 --- REGISTRANDO EL LOG DEL STORED
 --------------------------------------------------------------------------------------------------------------------------------------------
@@ -109,7 +111,7 @@ LEFT JOIN PE_PROD_LZ_DATA.ALDM_SUBSCRIBER_STATUS s
     ON dos.subscriber_status_key = CAST(s.subscriber_status_key AS DECIMAL(20, 0))
 ) WITH DATA PRIMARY INDEX(numero_telefonico)';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 1, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- Validar el producto asociado de los telefonos fijo
@@ -137,8 +139,11 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
         FROM PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_002 a
         INNER JOIN PE_PROD_LZ_DATA.ALDM_ASSIGNED_PRODUCT b
             ON a.subscriber_key = b.subscriber_key
-        WHERE b.service_type = ''VOIC''
-          AND b.assigned_product_state_key = ''1097''
+ 			AND b.service_type = ''VOIC''
+          	AND b.assigned_product_state_key = ''1097''
+        WHERE A.tipo_plan = ''FIJA''
+	     
+		 
     ) base
     WHERE ord = 1
 ) WITH DATA PRIMARY INDEX(assigned_product_key, subscriber_key, numero_telefonico)';
@@ -187,9 +192,9 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
             ON a.city_key = b.city_key
         LEFT JOIN PE_PROD_LZ_DATA.ALDM_DEPARTMENT c
             ON b.department_key = c.department_key
-) WITH DATA PRIMARY INDEX(subscriber_key, numero_telefonico)';
+) WITH DATA PRIMARY INDEX(address_key)';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 3, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- Consolidadr Informacion
@@ -200,8 +205,7 @@ CALL PE_REG_D_FG_CONFIG.SP_TABLE_OPERATION(INH_STAGE, vTabla, 'D', '');
 SET vSQL = '
 CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS  
 (
-    SELECT a.numero_telefonico
-         , a.fecha
+    SELECT a.numero_telefonico 
          , a.customer_key
          , a.subscriber_key
          , a.original_activation_date
@@ -245,7 +249,7 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
         ON a.direccion = d.dre_cod_dir_cd
 ) WITH DATA PRIMARY INDEX(numero_telefonico, subscriber_key)';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 4, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- Obtener datos del subscriptor asociado a la linea
@@ -262,7 +266,7 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
     ) = 1
 ) WITH DATA PRIMARY INDEX(numero_telefonico)';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 5, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- Obtener datos los subscriptores anteriores asociado a la linea del mismo cliente
@@ -286,7 +290,7 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
     WHERE 1 = 1 
 ) WITH DATA PRIMARY INDEX(numero_telefonico)';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 6, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- Obtener ordenes de bajas y alta por reinstalacion (Escenario de Suspension Llamali)
@@ -328,7 +332,7 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
       AND c.order_action_type_id IN (''CE'', ''ES'')
 ) WITH DATA PRIMARY INDEX(numero_telefonico, subscriber_key, order_action_key)';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 7, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- A?adir el detalle de ordenes a la informacion del subscriptor
@@ -346,7 +350,7 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
        AND a.customer_key = b.customer_key
 ) WITH DATA PRIMARY INDEX(numero_telefonico, subscriber_key, order_action_key)';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 8, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- Cruzar la informacion con el reporte de Llamali para identificar las suspensiones
@@ -357,7 +361,7 @@ CALL DBC.SysExecSQL(vSQL);
 SET vTabla = 'TMP_EM_MTCIDENLINEA_010';
 CALL PE_REG_D_FG_CONFIG.SP_TABLE_OPERATION(INH_STAGE, vTabla, 'D', '');
 SET vSQL = '
-CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
+CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS (
     SELECT DISTINCT 
            a.numero_telefonico
          , tups
@@ -395,7 +399,7 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
          , CAST(c.order_action_start_date AS DATE) - CAST(TO_DATE(b.fecha_inicio_suspencion, ''DDMMYYYY'') AS DATE) dias_baja
          , ''SI'' flag_llamali
     FROM PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_007 a
-    INNER JOIN PE_PROD_REG_DATA.T_LLAMAL_OUT_RUREPORTE_D b
+    INNER JOIN ' || INH_DATA || '.T_EM_LLAMAL_OUT_RUREPORTE_D b
         ON a.numero_telefonico = b.numero_telefonico
        AND a.numero_documento = b.numero_documento
        AND COALESCE(b.fecha_inicio_suspencion, '''') <> ''''
@@ -405,7 +409,7 @@ CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
        AND c.order_action_type_id = ''CE''
 ) WITH DATA PRIMARY INDEX(numero_telefonico)';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 9, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- Eliminar si un telefono tiene fecha de suspension nula y existe otro registro con fecha de suspension no nula
@@ -418,7 +422,7 @@ WHERE fecha_de_suspension IS NULL
       WHERE b.fecha_de_suspension IS NOT NULL
   )';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 10, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 /*Insertar los telefonos que no tienen una orden de baja (CE) luego de 1 a 5 d?as 
@@ -426,10 +430,9 @@ CALL DBC.SysExecSQL(vSQL);
     El objetivo es compartir en otro bae esos casos
 Se marca como flag_llamali = 'OB'
 */
-SET vTabla = 'TMP_EM_MTCIDENLINEA_010';
-CALL PE_REG_D_FG_CONFIG.SP_TABLE_OPERATION(INH_STAGE, vTabla, 'D', '');
+
 SET vSQL = '
-CREATE TABLE  ' || INH_STAGE || '.' || vTabla || ' AS
+INSERT INTO  ' || INH_STAGE || '.' || vTabla || '
 SELECT DISTINCT 
        a.numero_telefonico
      , a.tups
@@ -459,28 +462,27 @@ SELECT DISTINCT
      , CAST(c.order_action_start_date AS DATE) - CAST(TO_DATE(b.fecha_inicio_suspencion, ''DDMMYYYY'') AS DATE) dias_baja
      , ''OB'' Existe_llamali
 FROM PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_007 a
-INNER JOIN PE_PROD_REG_DATA.T_LLAMAL_OUT_RUREPORTE_D b
+INNER JOIN ' || INH_DATA || '.T_EM_LLAMAL_OUT_RUREPORTE_D b
     ON a.numero_telefonico = b.numero_telefonico
    AND a.numero_documento = b.numero_documento
    AND COALESCE(b.fecha_inicio_suspencion, '''') <> ''''
 LEFT JOIN PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_009 c
     ON a.numero_telefonico = c.numero_telefonico
    AND CAST(TO_DATE(b.fecha_inicio_suspencion, ''DDMMYYYY'') AS DATE) BETWEEN CAST(c.order_action_start_date AS DATE) - 5
-                                                                   AND CAST(c.order_action_start_date AS DATE)
-   AND c.order_action_type_id = ''CE''
+            AND CAST(c.order_action_start_date AS DATE)
+   			AND c.order_action_type_id = ''CE''
 LEFT JOIN PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_010 d
     ON a.numero_telefonico = d.numero_telefonico
    AND CAST(TO_DATE(b.fecha_inicio_suspencion, ''DDMMYYYY'') AS DATE) = d.fecha_de_suspension
    AND COALESCE(d.dias_baja, 1) = 0
 WHERE d.numero_telefonico IS NULL';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 11, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 
 -- Se insertar los registros que no existen en la tabla historica de llamali
 -- Para estos registros no se coloca fecha de baja,suspension y activacion
-SET vTabla = 'TMP_EM_MTCIDENLINEA_010';
-CALL PE_REG_D_FG_CONFIG.SP_TABLE_OPERATION(INH_STAGE, vTabla, 'D', '');
+
 SET vSQL = '
 INSERT INTO PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_010 
 (
@@ -488,20 +490,20 @@ INSERT INTO PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_010
     direccion, fecha_alta, estado_actual, fecha_estado_actual, flag_llamali
 )
 SELECT DISTINCT 
-       a.numero_telefonico
-     , b.tups
-     , TRIM(b.nombres_amd) || '' '' || TRIM(b.apellidos_amd) nombre_titular
-     , b.tipo_doc_id_amd tipo_documento
-     , b.numero_documento
-     , OREPLACE(direccion_txt, '',,,,,'', '','') direccion_txt
-     , CAST(b.original_activation_date AS DATE) fecha_alta
-     , CASE 
-           WHEN b.subscriber_status_desc = ''Active'' THEN ''ACTIVO''
-           WHEN LOWER(b.subscriber_status_desc) LIKE ''%sus%'' THEN ''SUSPENDIDO''
-           WHEN b.subscriber_status_desc IS NOT NULL THEN ''BAJA''
-       END estado_actual
-     , CAST(subscriber_status_date AS DATE) fecha_estado_actual
-     , ''NO'' Existe_llamali
+	   a.numero_telefonico
+	 , b.tups
+	 , TRIM(b.nombres_amd) || '' '' || TRIM(b.apellidos_amd) nombre_titular
+	 , b.tipo_doc_id_amd tipo_documento
+	 , b.numero_documento
+	 , OREPLACE(direccion_txt, '',,,,,'', '','') direccion_txt
+	 , CAST(b.original_activation_date AS DATE) fecha_alta
+	 , CASE 
+	       WHEN b.subscriber_status_desc = ''Active'' THEN ''ACTIVO''
+	       WHEN LOWER(b.subscriber_status_desc) LIKE ''%sus%'' THEN ''SUSPENDIDO''
+	       WHEN b.subscriber_status_desc IS NOT NULL THEN ''BAJA''
+	   END estado_actual
+	 , CAST(subscriber_status_date AS DATE) fecha_estado_actual
+	 , ''NO'' Existe_llamali
 FROM PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_001 a
 LEFT JOIN PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_007 b
     ON a.numero_telefonico = b.numero_telefonico
@@ -520,18 +522,17 @@ A.*
 FROM PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_010 A
 ';
 
-INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 2, CURRENT_TIMESTAMP, vSQL);
+INSERT INTO PE_REG_D_FG_CONFIG.LOGS_SPS_DETAILS VALUES(vSTORED, 12, CURRENT_TIMESTAMP, vSQL);
 CALL DBC.SysExecSQL(vSQL);
 /*
-INSERT INTO PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_010 
-SELECT   NUMERO_TELEFONICO,TUPS ES_TUPS, NOMBRE_TITULAR,TIPO_DOCUMENTO,NUMERO_DOCUMENTO,DIRECCION
+SELECT   NUMERO_TELEFONICO,TUPS ES_TUPS, NOMBRE_TITULAR,TIPO_DOCUMENTO,NUMERO_DOCUMENTO,DIRECCION,
 FECHA_ALTA, ESTADO_ACTUAL,FECHA_ESTADO_ACTUAL,FECHA_DE_BAJA,FECHA_DE_SUSPENSION,FECHA_TERMINO_SUSPENSION 
 ,FECHA_DE_REACTIVACION 
   FROM PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_010 
 where flag_llamali <> 2
  ORDER BY ES_TUPS DESC,flag_llamali DESC,NUMERO_TELEFONICO,FECHA_DE_SUSPENSION  DESC
 
-SELECT NUMERO_TELEFONICO,TUPS ES_TUPS, NOMBRE_TITULAR,TIPO_DOCUMENTO,NUMERO_DOCUMENTO,DIRECCION
+SELECT NUMERO_TELEFONICO,TUPS ES_TUPS, NOMBRE_TITULAR,TIPO_DOCUMENTO,NUMERO_DOCUMENTO,DIRECCION,
 FECHA_ALTA, ESTADO_ACTUAL,FECHA_ESTADO_ACTUAL,FECHA_DE_BAJA,FECHA_DE_SUSPENSION,FECHA_TERMINO_SUSPENSION 
 ,FECHA_DE_REACTIVACION ,ORDER_KEY, ORDER_ACTION_KEY, ORDER_ACTION_START_DATE,DIAS_BAJA DIAS_DESPUES
   FROM PE_DESA_REG_STAGE.TMP_EM_MTCIDENLINEA_010 
