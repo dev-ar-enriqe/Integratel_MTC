@@ -1,7 +1,9 @@
 REPLACE VIEW PE_DESA_REG_VIEW.VW_MTCIDENLINEA_H AS
 SELECT * FROM PE_DESA_REG_DATA.T_MTCIDENLINEA_H
 where flag_llamali <> 'OB'
+and cast(fecha_ejecucion as date) = current_Date;
 
 REPLACE VIEW PE_DESA_REG_VIEW.VW_MTCIDENLINEA_OBSERVADOS_H AS
 SELECT * FROM PE_DESA_REG_DATA.T_MTCIDENLINEA_H
 where flag_llamali = 'OB'
+and cast(fecha_ejecucion as date) = current_Date;
